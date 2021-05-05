@@ -74,13 +74,13 @@ The output of the final node is used as a steering angle for the car.
 
 #### 2. Attempts to reduce overfitting in the model
 
-To prevent overfitting, I've added dropout layers after the Dense layers. The dropout rate is rather low, with value of 0.1 for all layers. I've also used l2 regularization in convolutional layers. I've also experimented with BatchNormalization and l1-l2 regularization, however, these actually worsened the performance of the model. However, this kind of regularization might be more useful if I had a bigger dataset or if I aimed to run the car on multiple tracks. 
+To prevent overfitting, I've added dropout layers after the Dense layers. The dropout rate is  0.25 for all layers. I've also used l2 regularization in convolutional layers with penalization value 0.0001. I've also experimented with BatchNormalization and l1-l2 regularization, however, these actually worsened the performance of the model. However, this kind of regularization might be more useful if I had a bigger dataset or if I aimed to run the car on multiple tracks. 
 
 The model was trained and validated on different data sets to ensure that the model was not overfitting. I used 20% of all data for validation purposes. The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
 
 #### 3. Model parameter tuning
 
-The model used an adam optimizer, with initial learning rate set to 0.001. Higher learning rate converged faster, however, I got lower validation accuracy. During the training, I used batches of size 48. Bigger batches converge faster, however, I got better results with smaller batches. 
+The model used an adam optimizer, with initial learning rate set to 0.001. Higher learning rate converged faster, however, I got lower validation accuracy. During the training, I used batches of size 8. Bigger batches converge faster, however, I got better results with smaller batches. 
 
 #### 4. Appropriate training data
 
@@ -98,7 +98,7 @@ My first step was to use LENET convolution neural network, however I quickly rea
 
 In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. The car was quickly capable of driving around the circuit, however, it didn't really generalize the model and it rather memorized it. This was obvious, as the MSE was very small for training set but a few orders of magnitude larger on the validation set. 
 
-To combat the overfitting, I modified the model so that it used L2 regularization in the convolutional layers and dropout layer after the dense layers. I kept the dropout value rather small (0.1), as with higher values, the netowrk started to have difficulty to drive even on a straight part of the circuit. However, I had to experiment with different values for both L2 regularizer and dropouts to find the sweet spon in which the network had both training and validation MSE in acceptable intervals.  
+To combat the overfitting, I modified the model so that it used L2 regularization in the convolutional layers and dropout layer after the dense layers. I kept the dropout value rather small (0.25), as with higher values, the netowrk started to have difficulty to drive even on a straight part of the circuit. However, I had to experiment with different values for both L2 regularizer and dropouts to find the sweet spon in which the network had both training and validation MSE in acceptable intervals.  
 
 The final step was to run the simulator to see how well the car was driving around track one. As expected, there were a few spots where the vehicle fell off the track - namely the final part of the circuit, once the car crosses the bridge. Since this part of the circuit was more complex than the rest (e.g. sharper turns or sudden turn to right side), I've added extra passes of this part to the dataset, using different car positions and approaching the turns from different sides of the road. I've also added extra samples of recovering the car from the side of the road, so it knew how to return back to the center of the lane.
 
@@ -109,6 +109,8 @@ At the end of the process, the vehicle is able to drive autonomously around the 
 The final model architecture consisted of a convolution neural network with the following layers and layer sizes:
 
 ```python
+dropout_rate = 0.25
+
 model = Sequential()
 model.add(Cropping2D(cropping=((50,20), (0,0)), input_shape=(160,320,3)))
 model.add(Lambda(lambda x: (x / 255.0) - 0.5))
@@ -116,25 +118,25 @@ model.add(Conv2D(filters=24,
                  kernel_size=(5, 5), 
                  strides=(2,2), 
                  activation='relu',
-                 kernel_regularizer=regularizers.l2(1e-4)))
+                 kernel_regularizer=regularizers.l2(0.0001)))
 model.add(Conv2D(filters=36, 
                  kernel_size=(5, 5), 
                  strides=(2,2), 
                  activation='relu',
-                 kernel_regularizer=regularizers.l2(1e-4)))
+                 kernel_regularizer=regularizers.l2(0.0001)))
 model.add(Conv2D(filters=48, 
                  kernel_size=(5, 5), 
                  strides=(2,2), 
                  activation='relu',
-                 kernel_regularizer=regularizers.l2(1e-4)))
+                 kernel_regularizer=regularizers.l2(0.0001)))
 model.add(Conv2D(filters=64, 
                  kernel_size=(3, 3), 
                  activation='relu',
-                 kernel_regularizer=regularizers.l2(1e-4)))
+                 kernel_regularizer=regularizers.l2(0.0001)))
 model.add(Conv2D(filters=64, 
                  kernel_size=(3, 3), 
                  activation='relu',
-                 kernel_regularizer=regularizers.l2(1e-4)))
+                 kernel_regularizer=regularizers.l2(0.0001)))
 model.add(Flatten())
 model.add(Dense(units=1164, activation='relu'))
 model.add(Dropout(dropout_rate))
@@ -167,7 +169,7 @@ I then recorded the vehicle recovering from the left side and right sides of the
 
 I also flipped images and angles, to give the CNN examples of turning to the other side of the road. The circuit contains mostly left turns, so the car runs into trouble if it needs to turn right. Apart from this, I also drived the circuit in the opposite direction to help the network with further generalization.
 
-After the collection process, I had 23124 number of data points. By flipping all of avaialble images, I increased the size of the dataset to 46248 images. 
+After the collection process, I had 9132 number of data points. By flipping all of avaialble images, I increased the size of the dataset to 18264 images. 
 
 I preprocessed each image during the training in two steps:
 	
